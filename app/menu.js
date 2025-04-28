@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as SQLite from "expo-sqlite";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Open or create database
 const db = SQLite.openDatabaseSync("menu.db"); // just a filename
@@ -24,6 +25,8 @@ function Menu() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+
 
   // Create table if it doesn't exist
   const createTable = async () => {
@@ -38,6 +41,8 @@ function Menu() {
           );`
     );
   };
+
+  
 
   // Insert data into SQLite
   const insertMenuIntoDB = async (menuData) => {

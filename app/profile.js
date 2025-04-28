@@ -1,3 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { useState } from "react";
 import {
   Image,
@@ -10,12 +13,148 @@ import {
 import { View, StyleSheet } from "react-native";
 
 function Profile() {
+  const router = useRouter();
   const [orderStatusChecked, setOrderStatusChecked] = useState(false);
   const [passwordChangesChecked, setPasswordChangesChecked] = useState(false);
   const [specialOffersChecked, setSpecialOffersChecked] = useState(false);
   const [newsletterChecked, setNewsletterChecked] = useState(false);
 
-  const handleBackNav = () => {};
+  const FIRST_NAME_KEY = "FIRST_NAME";
+  const LAST_NAME_KEY = "LAST_NAME";
+  const EMAIL_KEY = "EMAIL";
+  const PHONE_KEY = "PHONE";
+
+  const orderStatusCheckedKey = "orderStatusCheckedKey";
+  const passwordChangesCheckedKey = "passwordChangesCheckedKey";
+  const specialOffersCheckedKey = "specialOffersCheckedKey";
+  const newsletterCheckedKey = "newsletterChecked";
+
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const loadUserData = async () => {
+    try {
+      const storedorderStatusChecked = await AsyncStorage.getItem(
+        orderStatusCheckedKey
+      );
+      const storedpasswordChangesCheckedKey = await AsyncStorage.getItem(
+        passwordChangesCheckedKey
+      );
+      const storedspecialOffersCheckedKey = await AsyncStorage.getItem(
+        specialOffersCheckedKey
+      );
+      const storednewsletterCheckedKey = await AsyncStorage.getItem(
+        newsletterCheckedKey
+      );
+
+      const storedFirstName = await AsyncStorage.getItem(FIRST_NAME_KEY);
+      const storedEmail = await AsyncStorage.getItem(EMAIL_KEY);
+      const storedLastName = await AsyncStorage.getItem(LAST_NAME_KEY);
+      const storedPhone = await AsyncStorage.getItem(PHONE_KEY);
+
+      if (storedFirstName) setFirstName(storedFirstName);
+      if (storedEmail) setEmail(storedEmail);
+      if (storedLastName) setLastName(storedLastName);
+      if (storedPhone) setLastName(storedPhone);
+
+      if (storedorderStatusChecked)
+        setOrderStatusChecked(storedorderStatusChecked);
+      if (storedpasswordChangesCheckedKey)
+        setPasswordChangesChecked(storedpasswordChangesCheckedKey);
+      if (storedspecialOffersCheckedKey)
+        setSpecialOffersChecked(storedspecialOffersCheckedKey);
+      if (storednewsletterCheckedKey)
+        setNewsletterChecked(storednewsletterCheckedKey);
+    } catch (error) {
+      console.log("Error loading user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveUserData = async () => {
+    if (validate) {
+      try {
+        await AsyncStorage.setItem(FIRST_NAME_KEY, firstName);
+        await AsyncStorage.setItem(EMAIL_KEY, email);
+        await AsyncStorage.setItem(LAST_NAME_KEY, lastName);
+        await AsyncStorage.setItem(PHONE_KEY, phone);
+
+        await AsyncStorage.setItem(
+          passwordChangesCheckedKey,
+          JSON.stringify(passwordChangesChecked)
+        );
+        await AsyncStorage.setItem(
+          specialOffersCheckedKey,
+          JSON.stringify(specialOffersChecked)
+        );
+        await AsyncStorage.setItem(newsletterCheckedKey, JSON.stringify(newsletterChecked));
+        await AsyncStorage.setItem(orderStatusCheckedKey, JSON.stringify(orderStatusChecked));
+      } catch (error) {
+        console.log("Error saving user data:", error);
+      }
+    }
+  };
+
+  const deleteUserData = async () => {
+    try {
+      await AsyncStorage.removeItem(FIRST_NAME_KEY);
+      await AsyncStorage.removeItem(EMAIL_KEY);
+      await AsyncStorage.removeItem(LAST_NAME_KEY);
+      await AsyncStorage.removeItem(PHONE_KEY);
+
+      await AsyncStorage.removeItem(newsletterCheckedKey);
+      await AsyncStorage.removeItem(orderStatusCheckedKey);
+      await AsyncStorage.removeItem(passwordChangesCheckedKey);
+      await AsyncStorage.removeItem(specialOffersCheckedKey);
+      await AsyncStorage.removeItem("@hasOnboarded");
+
+      setFirstName("");
+      setEmail("");
+      setLastName("");
+      setPhone("");
+
+      setNewsletterChecked(false);
+      setOrderStatusChecked(false);
+      setPasswordChangesChecked(false);
+      setSpecialOffersChecked(false);
+
+      router.replace("./onboarding");
+    } catch (error) {
+      console.log("Error deleting user data:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const validate = () => {
+    let valid = true;
+    let errorsObj = {};
+
+    if (!firstName.trim()) {
+      valid = false;
+    }
+    if (!lastName.trim()) {
+      valid = false;
+    }
+
+    if (!email.trim()) {
+      valid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      valid = false;
+    }
+
+    setErrors(errorsObj);
+    return valid;
+  };
+
+  const handleBackNav = () => {
+    router.back()
+  };
 
   return (
     <View style={styles.screenContainer}>
@@ -56,9 +195,11 @@ function Profile() {
           width: "100%",
         }}
       >
-        <ScrollView contentContainerStyle={{
-          paddingBottom:30
-        }}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: 30,
+          }}
+        >
           <View>
             <Text style={[styles.titleStyle, { marginHorizontal: 20 }]}>
               Personal Information
@@ -108,22 +249,38 @@ function Profile() {
           <View>
             <View style={styles.inputContainer}>
               <Text style={styles.textTitle}>First Name</Text>
-              <TextInput style={styles.textInput} />
+              <TextInput
+                style={styles.textInput}
+                value={firstName}
+                onChangeText={setFirstName}
+              />
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.textTitle}>Last Name</Text>
-              <TextInput style={styles.textInput} />
+              <TextInput
+                style={styles.textInput}
+                value={lastName}
+                onChangeText={setLastName}
+              />
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.textTitle}>Email</Text>
-              <TextInput style={styles.textInput} />
+              <TextInput
+                style={styles.textInput}
+                value={email}
+                onChangeText={setEmail}
+              />
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.textTitle}>Phone Number</Text>
-              <TextInput style={styles.textInput} />
+              <TextInput
+                style={styles.textInput}
+                value={phone}
+                onChangeText={setPhone}
+              />
             </View>
           </View>
 
@@ -189,7 +346,12 @@ function Profile() {
 
           <View>
             <View>
-              <TouchableOpacity style={styles.yellowButton}>
+              <TouchableOpacity
+                style={styles.yellowButton}
+                onPress={() => {
+                  deleteUserData();
+                }}
+              >
                 <Text style={styles.yellowButtonText}>Logout</Text>
               </TouchableOpacity>
             </View>
@@ -201,6 +363,9 @@ function Profile() {
               }}
             >
               <TouchableOpacity
+                onPress={() => {
+                  loadUserData();
+                }}
                 style={[
                   styles.transparentButton,
                   {
@@ -208,11 +373,16 @@ function Profile() {
                   },
                 ]}
               >
-                <Text style={styles.transparentButtonText}>Logout</Text>
+                <Text style={styles.transparentButtonText}>Discard</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.filledButton}>
-                <Text style={styles.yellowButtonText}>Logout</Text>
+              <TouchableOpacity
+                style={styles.filledButton}
+                onPress={() => {
+                  saveUserData();
+                }}
+              >
+                <Text style={styles.yellowButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>

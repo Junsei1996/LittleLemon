@@ -46,10 +46,24 @@ function Onboarding() {
     return valid;
   };
 
+  const FIRST_NAME_KEY = 'FIRST_NAME';
+  const EMAIL_KEY = 'EMAIL';
+
+  const saveUserData = async () => {
+    try {
+      await AsyncStorage.setItem(FIRST_NAME_KEY, firstName);
+      await AsyncStorage.setItem(EMAIL_KEY, email);
+      
+    } catch (error) {
+      console.log('Error saving user data:', error);
+    }
+  };
+
   const handleSave = async () => {
     if (validate()) {
       try {
         await AsyncStorage.setItem("@hasOnboarded", "true");
+        await saveUserData()
         // After saving, you can force navigate or trigger a re-render
         // (OR better: manage navigation with something like react-navigation)
       } catch (e) {
